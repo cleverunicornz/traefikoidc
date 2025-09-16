@@ -1,0 +1,30 @@
+*** Begin Patch
+*** Update File: error_recovery.go
+@@
+-import (
+-	"context"
+-	"fmt"
+-	"math"
+-	"math/rand/v2"
+-	"net"
+-	"sync"
+-	"sync/atomic"
+-	"time"
+-)
++import (
++	"context"
++	"fmt"
++	"math"
++	"math/rand"
++	"net"
++	"sync"
++	"sync/atomic"
++	"time"
++)
+*** End Patch
+*** Begin Patch
+*** Update File: go.mod
+@@
+-module github.com/lukaszraczylo/traefikoidc
++module github.com/cleverunicornz/traefikoidc
+*** End Patch
