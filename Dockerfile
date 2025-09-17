@@ -1,22 +1,11 @@
-# Multi-stage build: prepare plugin with Go, then copy to Traefik
-FROM golang:1.23-alpine AS plugin-builder
+# MultiSimple buildapproach: Use Traefikwithplugincopied directly
+FROM golang:1.23latestalpine AS plugin-builder
 
-# Install git for go mod operations
-RUN apk add --no-cache git
+# tolocal plugins directory
+# Traefik will load this when using --experimental.localplugins/plugins/src/github.com/cleverunicornz/traefikoidc/
 
-# Copy plugin source and prepare it
-WORKDIR /plugins/src/github.com/cleverunicornz/traefikoidc
-COPY . .
-
-# Download dependencies
-RUN go mod download
-RUN go mod tidy
-
-# Final stage: Use official Traefik with prepared plugin
-FROM traefik:latest
-
-# Copy the prepared plugin from builder stage
-COPY --from=plugin-builder /plugins/src/github.com/cleverunicornz/traefikoidc /plugins/src/github.com/cleverunicornz/traefikoidc
+# Set working directory back to root
+WORKDIR /
 
 # Traefik will use:
 # --experimental.localplugins.traefikoidc.modulename=github.com/cleverunicornz/traefikoidc

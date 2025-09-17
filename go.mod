@@ -1,4 +1,4 @@
-module github.com/lukaszraczylo/traefikoidc
+module github.com/cleverunicornz/traefikoidc
 
 go 1.23
 
