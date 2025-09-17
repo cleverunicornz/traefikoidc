@@ -1,8 +1,9 @@
-# MultiSimple buildapproach: Use Traefikwithplugincopied directly
-FROM golang:1.23latestalpine AS plugin-builder
+# Simple approach: Use Traefik with plugin copied directly
+FROM traefik:latest
 
-# tolocal plugins directory
-# Traefik will load this when using --experimental.localplugins/plugins/src/github.com/cleverunicornz/traefikoidc/
+# Copy plugin source to the local plugins directory
+# Traefik will load this when using --experimental.localplugins
+COPY . /plugins/src/github.com/cleverunicornz/traefikoidc/
 
 # Set working directory back to root
 WORKDIR /
