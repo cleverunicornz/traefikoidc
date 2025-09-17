@@ -1,7 +1,7 @@
 displayName: Traefik OIDC
 type: middleware
 
-import: github.com/lukaszraczylo/traefikoidc
+import: github.com/cleverunicornz/traefikoidc
 
 summary: |
   Middleware adding OpenID Connect (OIDC) authentication to Traefik routes.
@@ -63,7 +63,7 @@ testData:
     - /public
     - /health
     - /metrics
-    
+
   headers: # Custom headers to set with templated values from claims and tokens
     - name: "X-User-Email"
       value: "{{.Claims.email}}"
@@ -117,7 +117,7 @@ configuration:
       The path where the OIDC provider will redirect after authentication.
       This must match one of the redirect URIs configured in your OIDC provider.
 
-      The full redirect URI will be constructed as: 
+      The full redirect URI will be constructed as:
       [scheme]://[host][callbackURL]
 
       Example: /oauth2/callback
@@ -157,7 +157,7 @@ configuration:
       Default: ["openid", "profile", "email"]
 
       Include "roles" or similar scope if you need role/group information.
-      Note: For Google OAuth, the middleware automatically handles the 
+      Note: For Google OAuth, the middleware automatically handles the
       proper authentication parameters and does NOT require the "offline_access"
       scope (which Google rejects as invalid). See documentation for details.
     required: false
@@ -225,7 +225,7 @@ configuration:
       Restricts access to specific email addresses.
       If provided, only users with these exact email addresses will be allowed access,
       in addition to any domain-level restrictions set by allowedUserDomains.
-      
+
       This provides fine-grained control over individual access and can be used
       together with allowedUserDomains for flexible access control strategies.
 
