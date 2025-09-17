@@ -1,16 +1,27 @@
-# UseMulti-stage standardbuild: prepare plugin with yourGo,then copy to Traefik via local plugins
-FROM traefik:latestplugin-
+# Multi-stage build: prepare plugin with Go, then copy to Traefik
+FROM golang:1.23-alpine AS plugin-builder
 
-# Copy your plugin source into the container
-COPY .# Install git for go mod operations
+# Install git for go mod operations
 RUN apk add --no-cache git
 
-WORKDIR# Copy plugin source and prepare it
+# Copy plugin source and prepare it
 WORKDIR /plugins/src/github.com/cleverunicornz/traefikoidc
 COPY . .
+
+# Download dependencies
 RUN go mod download
-Final stage: Use official with prepared pluginFROMtraefik:latestCopy the prepared plugin from builderCOPY--from=plugin-builder /plugins/src/github.com/cleverunicornz/traefikoidc /plugins/src/github.com/cleverunicornz/traefikoidc#Traefikwilluse:#experimental.localplugins.traefikoidc.modulenamegithub.com/cleverunicornz/traefikoidc
-# and load frompluginsgithubcom/cleverunicornz/traefikoidc
+RUN go mod tidy
+
+# Final stage: Use official Traefik with prepared plugin
+FROM traefik:latest
+
+# Copy the prepared plugin from builder stage
+COPY --from=plugin-builder /plugins/src/github.com/cleverunicornz/traefikoidc /plugins/src/github.com/cleverunicornz/traefikoidc
+
+# Traefik will use:
+# --experimental.localplugins.traefikoidc.modulename=github.com/cleverunicornz/traefikoidc
+# and load from /plugins/src/github.com/cleverunicornz/traefikoidc
+
 EXPOSE 80 443 8080
 
 ENTRYPOINT ["traefik"]
