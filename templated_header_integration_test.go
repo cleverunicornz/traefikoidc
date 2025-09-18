@@ -29,7 +29,7 @@ func TestTemplatedHeadersIntegration(t *testing.T) {
 		{
 			name: "Basic Email Header",
 			headers: []TemplatedHeader{
-				{Name: "X-User-Email", Value: "{{.Claims.email}}"},
+				{Name: "X-User-Email", Value: "[[.Claims.email]]"},
 			},
 			claims: map[string]interface{}{
 				"email": "user@example.com",
@@ -41,9 +41,9 @@ func TestTemplatedHeadersIntegration(t *testing.T) {
 		{
 			name: "Multiple Headers",
 			headers: []TemplatedHeader{
-				{Name: "X-User-Email", Value: "{{.Claims.email}}"},
-				{Name: "X-User-ID", Value: "{{.Claims.sub}}"},
-				{Name: "X-User-Name", Value: "{{.Claims.given_name}} {{.Claims.family_name}}"},
+				{Name: "X-User-Email", Value: "[[.Claims.email]]"},
+				{Name: "X-User-ID", Value: "[[.Claims.sub]]"},
+				{Name: "X-User-Name", Value: "[[.Claims.given_name]] [[.Claims.family_name]]"},
 			},
 			claims: map[string]interface{}{
 				"email":       "user@example.com",
@@ -60,7 +60,7 @@ func TestTemplatedHeadersIntegration(t *testing.T) {
 		{
 			name: "Authorization Header with Bearer Token",
 			headers: []TemplatedHeader{
-				{Name: "Authorization", Value: "Bearer {{.AccessToken}}"},
+				{Name: "Authorization", Value: "Bearer [[.AccessToken]]"},
 			},
 			expectedHeaders: map[string]string{
 				// We'll update this dynamically after generating the token
@@ -70,7 +70,7 @@ func TestTemplatedHeadersIntegration(t *testing.T) {
 		{
 			name: "ID Token Header",
 			headers: []TemplatedHeader{
-				{Name: "X-ID-Token", Value: "{{.IdToken}}"},
+				{Name: "X-ID-Token", Value: "[[.IdToken]]"},
 			},
 			expectedHeaders: map[string]string{
 				// We'll update this dynamically after generating the token
@@ -80,8 +80,8 @@ func TestTemplatedHeadersIntegration(t *testing.T) {
 		{
 			name: "Both Token Types",
 			headers: []TemplatedHeader{
-				{Name: "X-Access-Token", Value: "{{.AccessToken}}"},
-				{Name: "X-ID-Token", Value: "{{.IdToken}}"},
+				{Name: "X-Access-Token", Value: "[[.AccessToken]]"},
+				{Name: "X-ID-Token", Value: "[[.IdToken]]"},
 			},
 			expectedHeaders: map[string]string{
 				// We'll update these dynamically after generating the tokens
@@ -92,7 +92,7 @@ func TestTemplatedHeadersIntegration(t *testing.T) {
 		{
 			name: "Missing Claim",
 			headers: []TemplatedHeader{
-				{Name: "X-User-Role", Value: "{{.Claims.role}}"},
+				{Name: "X-User-Role", Value: "[[.Claims.role]]"},
 			},
 			claims: map[string]interface{}{
 				"email": "user@example.com",
@@ -105,7 +105,7 @@ func TestTemplatedHeadersIntegration(t *testing.T) {
 		{
 			name: "Conditional Header",
 			headers: []TemplatedHeader{
-				{Name: "X-User-Admin", Value: "{{if .Claims.is_admin}}true{{else}}false{{end}}"},
+				{Name: "X-User-Admin", Value: "[[if .Claims.is_admin]]true[[else]]false[[end]]"},
 			},
 			claims: map[string]interface{}{
 				"email":    "admin@example.com",
@@ -118,7 +118,7 @@ func TestTemplatedHeadersIntegration(t *testing.T) {
 		{
 			name: "Combined Token and Claim",
 			headers: []TemplatedHeader{
-				{Name: "X-Auth-Info", Value: "User={{.Claims.email}}, Token={{.AccessToken}}"},
+				{Name: "X-Auth-Info", Value: "User=[[.Claims.email]], Token=[[.AccessToken]]"},
 			},
 			claims: map[string]interface{}{
 				"email": "user@example.com",
@@ -131,7 +131,7 @@ func TestTemplatedHeadersIntegration(t *testing.T) {
 		{
 			name: "Opaque Access Token with AccessTokenField",
 			headers: []TemplatedHeader{
-				{Name: "X-User-AccessToken", Value: "{{.AccessToken}}"},
+				{Name: "X-User-AccessToken", Value: "[[.AccessToken]]"},
 			},
 			claims: map[string]interface{}{ // For ID Token
 				"email": "opaque_user@example.com",
@@ -384,7 +384,7 @@ func TestTemplatedHeadersIntegration(t *testing.T) {
 					// For <no value> case, it might not be set if template resolves to empty and header is omitted.
 					// However, Go templates usually insert "<no value>" string.
 					if expectedValue == "<no value>" && tc.name == "Missing Claim" { // Special handling for <no value>
-						// If the template {{.Claims.role}} results in an empty string because role is missing,
+						// If the template [[.Claims.role]] results in an empty string because role is missing,
 						// and the header is not set, this is also acceptable for "<no value>".
 						// The current test expects the literal string "<no value>".
 						// Let's assume for now that if it's missing, it's an error unless specifically handled.
@@ -445,7 +445,7 @@ func TestEdgeCaseTemplatedHeaders(t *testing.T) {
 		{
 			name: "Array Claim Access",
 			headers: []TemplatedHeader{
-				{Name: "X-Roles", Value: "{{range $i, $e := .Claims.roles}}{{if $i}},{{end}}{{$e}}{{end}}"},
+				{Name: "X-Roles", Value: "[[range $i, $e := .Claims.roles]][[if $i]],[[end]][[.]][[end]]"},
 			},
 			claims: map[string]interface{}{
 				"roles": []interface{}{"admin", "user", "manager"},
@@ -575,14 +575,14 @@ func TestEdgeCaseTemplatedHeaders(t *testing.T) {
 
 // createLargeTemplate creates a template with many variable references
 func createLargeTemplate(size int) string {
-	template := "{{with .Claims}}"
+	template := "[[with .Claims]]"
 	for i := 0; i < size; i++ {
 		if i > 0 {
 			template += ","
 		}
-		template += "{{.field" + string(rune('a'+i%26)) + string(rune('0'+i%10)) + "}}"
+		template += "[[.field" + string(rune('a'+i%26)) + string(rune('0'+i%10)) + "]]"
 	}
-	template += "{{end}}"
+	template += "[[end]]"
 	return template
 }
 

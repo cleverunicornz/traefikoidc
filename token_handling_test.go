@@ -39,22 +39,22 @@ func TestTokenTypeDistinction(t *testing.T) {
 	}{
 		{
 			name:          "Access Token Only",
-			templateText:  "Bearer {{.AccessToken}}",
+			templateText:  "Bearer [[.AccessToken]]",
 			expectedValue: "Bearer test-access-token-abc123",
 		},
 		{
 			name:          "ID Token Only",
-			templateText:  "ID: {{.IdToken}}",
+			templateText:  "ID: [[.IdToken]]",
 			expectedValue: "ID: test-id-token-xyz789",
 		},
 		{
 			name:          "Both Tokens",
-			templateText:  "Access: {{.AccessToken}} ID: {{.IdToken}}",
+			templateText:  "Access: [[.AccessToken]] ID: [[.IdToken]]",
 			expectedValue: "Access: test-access-token-abc123 ID: test-id-token-xyz789",
 		},
 		{
 			name:          "Both Tokens in Authorization Format",
-			templateText:  "Bearer {{.AccessToken}} and Bearer {{.IdToken}}",
+			templateText:  "Bearer [[.AccessToken]] and Bearer [[.IdToken]]",
 			expectedValue: "Bearer test-access-token-abc123 and Bearer test-id-token-xyz789",
 		},
 	}
@@ -121,10 +121,10 @@ func TestTokenTypeIntegration(t *testing.T) {
 
 	// Define test headers that use both token types
 	headers := []TemplatedHeader{
-		{Name: "X-ID-Token", Value: "{{.IdToken}}"},
-		{Name: "X-Access-Token", Value: "{{.AccessToken}}"},
-		{Name: "Authorization", Value: "Bearer {{.AccessToken}}"},
-		{Name: "X-Email-From-Claims", Value: "{{.Claims.email}}"},
+		{Name: "X-ID-Token", Value: "[[.IdToken]]"},
+		{Name: "X-Access-Token", Value: "[[.AccessToken]]"},
+		{Name: "Authorization", Value: "Bearer [[.AccessToken]]"},
+		{Name: "X-Email-From-Claims", Value: "[[.Claims.email]]"},
 	}
 
 	// Store intercepted headers for verification
@@ -156,8 +156,8 @@ func TestTokenTypeIntegration(t *testing.T) {
 		tokenCache:         NewTokenCache(),
 		limiter:            rate.NewLimiter(rate.Every(time.Second), 10),
 		logger:             NewLogger("debug"),
-		allowedUserDomains: map[string]struct{}{"example.com": {}},
-		excludedURLs:       map[string]struct{}{"/favicon": {}},
+		allowedUserDomains: map[string]struct{}{"example.com": {]],
+		excludedURLs:       map[string]struct{}{"/favicon": {]],
 		httpClient:         &http.Client{},
 		initComplete:       make(chan struct{}),
 		sessionManager:     ts.sessionManager,

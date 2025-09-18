@@ -13,7 +13,7 @@ func TestTemplatedHeaderValidation(t *testing.T) {
 	}{
 		{
 			name:          "Empty Name",
-			header:        TemplatedHeader{Name: "", Value: "{{.Claims.email}}"},
+			header:        TemplatedHeader{Name: "", Value: "[[.Claims.email]]"},
 			expectedError: "header name cannot be empty",
 		},
 		{
@@ -24,36 +24,36 @@ func TestTemplatedHeaderValidation(t *testing.T) {
 		{
 			name:          "Not a Template",
 			header:        TemplatedHeader{Name: "X-Email", Value: "static-value"},
-			expectedError: "header value 'static-value' does not appear to be a valid template (missing {{ }})",
+			expectedError: "header value 'static-value' does not appear to be a valid template (missing [[ ]])",
 		},
 		{
 			name:          "Lowercase claims",
-			header:        TemplatedHeader{Name: "X-Email", Value: "{{.claims.email}}"},
-			expectedError: "header template '{{.claims.email}}' appears to use lowercase 'claims' - use '{{.Claims...' instead (case sensitive)",
+			header:        TemplatedHeader{Name: "X-Email", Value: "[[.claims.email]]"},
+			expectedError: "header template '[[.claims.email]]' appears to use lowercase 'claims' - use '[[.Claims...' instead (case sensitive)",
 		},
 		{
 			name:          "Lowercase accessToken",
-			header:        TemplatedHeader{Name: "X-Token", Value: "Bearer {{.accessToken}}"},
-			expectedError: "header template 'Bearer {{.accessToken}}' appears to use lowercase 'accessToken' - use '{{.AccessToken...' instead (case sensitive)",
+			header:        TemplatedHeader{Name: "X-Token", Value: "Bearer [[.accessToken]]"},
+			expectedError: "header template 'Bearer [[.accessToken]]' appears to use lowercase 'accessToken' - use '[[.AccessToken...' instead (case sensitive)",
 		},
 		{
 			name:          "Lowercase idToken",
-			header:        TemplatedHeader{Name: "X-Token", Value: "Bearer {{.idToken}}"},
-			expectedError: "header template 'Bearer {{.idToken}}' appears to use lowercase 'idToken' - use '{{.IdToken...' instead (case sensitive)",
+			header:        TemplatedHeader{Name: "X-Token", Value: "Bearer [[.idToken]]"},
+			expectedError: "header template 'Bearer [[.idToken]]' appears to use lowercase 'idToken' - use '[[.IdToken...' instead (case sensitive)",
 		},
 		{
 			name:          "Lowercase refreshToken",
-			header:        TemplatedHeader{Name: "X-Refresh", Value: "Bearer {{.refreshToken}}"},
-			expectedError: "header template 'Bearer {{.refreshToken}}' appears to use lowercase 'refreshToken' - use '{{.RefreshToken...' instead (case sensitive)",
+			header:        TemplatedHeader{Name: "X-Refresh", Value: "Bearer [[.refreshToken]]"},
+			expectedError: "header template 'Bearer [[.refreshToken]]' appears to use lowercase 'refreshToken' - use '[[.RefreshToken...' instead (case sensitive)",
 		},
 		{
 			name:          "Valid Template",
-			header:        TemplatedHeader{Name: "X-Email", Value: "{{.Claims.email}}"},
+			header:        TemplatedHeader{Name: "X-Email", Value: "[[.Claims.email]]"},
 			expectedError: "",
 		},
 		{
 			name:          "Valid Bearer Token Template",
-			header:        TemplatedHeader{Name: "Authorization", Value: "Bearer {{.AccessToken}}"},
+			header:        TemplatedHeader{Name: "Authorization", Value: "Bearer [[.AccessToken]]"},
 			expectedError: "",
 		},
 	}
@@ -97,7 +97,7 @@ func TestTemplateParsingInNew(t *testing.T) {
 		{
 			name: "Single Valid Template",
 			headers: []TemplatedHeader{
-				{Name: "X-Email", Value: "{{.Claims.email}}"},
+				{Name: "X-Email", Value: "[[.Claims.email]]"},
 			},
 			expectedTemplates: 1,
 			expectError:       false,
@@ -105,9 +105,9 @@ func TestTemplateParsingInNew(t *testing.T) {
 		{
 			name: "Multiple Valid Templates",
 			headers: []TemplatedHeader{
-				{Name: "X-Email", Value: "{{.Claims.email}}"},
-				{Name: "X-User-ID", Value: "{{.Claims.sub}}"},
-				{Name: "Authorization", Value: "Bearer {{.AccessToken}}"},
+				{Name: "X-Email", Value: "[[.Claims.email]]"},
+				{Name: "X-User-ID", Value: "[[.Claims.sub]]"},
+				{Name: "Authorization", Value: "Bearer [[.AccessToken]]"},
 			},
 			expectedTemplates: 3,
 			expectError:       false,
@@ -115,7 +115,7 @@ func TestTemplateParsingInNew(t *testing.T) {
 		{
 			name: "Invalid Template",
 			headers: []TemplatedHeader{
-				{Name: "X-Email", Value: "{{.Claims.email"}, // Missing closing braces
+				{Name: "X-Email", Value: "[[.Claims.email"}, // Missing closing braces
 			},
 			expectedTemplates: 0,
 			expectError:       true,
@@ -123,8 +123,8 @@ func TestTemplateParsingInNew(t *testing.T) {
 		{
 			name: "Mix of Valid and Invalid Templates",
 			headers: []TemplatedHeader{
-				{Name: "X-Email", Value: "{{.Claims.email}}"},
-				{Name: "X-Invalid", Value: "{{if .Claims.admin}}Admin{{end"}, // Invalid template
+				{Name: "X-Email", Value: "[[.Claims.email]]"},
+				{Name: "X-Invalid", Value: "[[if .Claims.admin]]Admin[[end"}, // Invalid template
 			},
 			expectedTemplates: 1,    // Only the valid template should be parsed
 			expectError:       true, // We expect an error for the invalid template, but we'll handle it
@@ -184,7 +184,7 @@ func TestTemplateParsingInNew(t *testing.T) {
 			// Check each template was parsed
 			for _, header := range tc.headers {
 				// Skip the known invalid templates
-				if header.Value == "{{.Claims.email" || header.Value == "{{if .Claims.admin}}Admin{{end" {
+				if header.Value == "[[.Claims.email" || header.Value == "[[if .Claims.admin]]Admin[[end" {
 					continue
 				}
 

@@ -152,6 +152,8 @@ type TraefikOidc struct {
 	tokenExchanger          TokenExchanger                // Added field for mocking
 	refreshGracePeriod      time.Duration                 // Configurable grace period for proactive refresh
 	headerTemplates         map[string]*template.Template // Parsed templates for custom headers
+	metaHeaderName          string                        // Name for meta header
+	metaClaims              []string                      // Claims to include in meta
 	tokenCleanupStopChan    chan struct{}                 // Channel to stop token cleanup goroutine
 	metadataRefreshStopChan chan struct{}                 // Channel to stop metadata refresh goroutine
 	goroutineWG             sync.WaitGroup                // WaitGroup to track background goroutines
@@ -469,6 +471,8 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		}(),
 		tokenCleanupStopChan:    make(chan struct{}),
 		metadataRefreshStopChan: make(chan struct{}),
+		metaHeaderName:          config.MetaHeaderName,
+		metaClaims:              config.MetaClaims,
 	}
 
 	t.sessionManager, _ = NewSessionManager(config.SessionEncryptionKey, config.ForceHTTPS, t.logger)
@@ -491,7 +495,8 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	// Initialize and parse header templates
 	t.headerTemplates = make(map[string]*template.Template)
 	for _, header := range config.Headers {
-		tmpl, err := template.New(header.Name).Parse(header.Value)
+		// Use [[ ]] delimiters to avoid collision with Nomad/Traefik templating
+		tmpl, err := template.New(header.Name).Delims("[[", "]]").Parse(header.Value)
 		if err != nil {
 			logger.Errorf("Failed to parse header template for %s: %v", header.Name, err)
 			continue
@@ -969,14 +974,69 @@ func (t *TraefikOidc) processAuthorizedRequest(rw http.ResponseWriter, req *http
 		req.Header.Set("X-Auth-Request-Token", idToken)
 	}
 
+	// Set canonical identity headers (always present, empty if claim missing)
+	claims, err := t.extractClaimsFunc(session.GetIDToken())
+	if err != nil {
+		t.logger.Errorf("Failed to extract claims for canonical headers: %v", err)
+		// Even if we can't extract claims, set empty headers to maintain contract
+		claims = make(map[string]interface{})
+	}
+
+	// Helper function to safely extract string claims
+	getClaimString := func(claims map[string]interface{}, keys ...string) string {
+		for _, key := range keys {
+			if val, ok := claims[key]; ok {
+				if strVal, ok := val.(string); ok {
+					return strVal
+				}
+			}
+		}
+		return ""
+	}
+
+	// Always set canonical headers
+	canonicalHeaders := map[string]string{
+		"X-User-ID":           getClaimString(claims, "sub", "user_id"),
+		"X-User-Email":        getClaimString(claims, "email"),
+		"X-User-Plan":         getClaimString(claims, "plan"),
+		"X-Organization-Role": getClaimString(claims, "org_role"),
+		"X-User-Name":         getClaimString(claims, "name"),
+		"X-Organization-ID":   getClaimString(claims, "org_id"),
+	}
+
+	for name, value := range canonicalHeaders {
+		req.Header.Set(name, value)
+		t.logger.Debugf("Set canonical header %s = %s", name, value)
+	}
+
+	// Set meta header if configured
+	if t.metaHeaderName != "" && len(t.metaClaims) > 0 {
+		metaData := make(map[string]interface{})
+		for _, claimKey := range t.metaClaims {
+			if val, ok := claims[claimKey]; ok {
+				metaData[claimKey] = val
+			}
+		}
+
+		if len(metaData) > 0 {
+			jsonBytes, err := json.Marshal(metaData)
+			if err != nil {
+				t.logger.Errorf("Failed to marshal meta claims: %v", err)
+				req.Header.Set(t.metaHeaderName, "")
+			} else {
+				req.Header.Set(t.metaHeaderName, string(jsonBytes))
+				t.logger.Debugf("Set meta header %s = %s", t.metaHeaderName, string(jsonBytes))
+			}
+		} else {
+			req.Header.Set(t.metaHeaderName, "")
+			t.logger.Debugf("No meta claims found, setting empty meta header")
+		}
+	}
+
 	// Execute and set templated headers if configured
 	if len(t.headerTemplates) > 0 {
-		// Claims for templates could come from ID token or Access token depending on config/needs
-		// For now, using ID token claims for consistency, adjust if AccessTokenField implies otherwise for headers
-		claims, err := t.extractClaimsFunc(session.GetIDToken())
-		if err != nil {
-			t.logger.Errorf("Failed to extract claims from ID Token for template headers: %v", err)
-		} else {
+		// Reuse claims already extracted for canonical headers
+		if err == nil {
 			// Create template data context with available tokens and claims
 			// Fields must be exported (uppercase) to be accessible in templates
 			templateData := struct {

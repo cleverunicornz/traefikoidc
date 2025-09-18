@@ -17,7 +17,7 @@ func TestTemplateExecution(t *testing.T) {
 	}{
 		{
 			name:         "String Claim",
-			templateText: "{{.Claims.email}}",
+			templateText: "[[.Claims.email]]",
 			data: map[string]interface{}{
 				"Claims": map[string]interface{}{
 					"email": "user@example.com",
@@ -28,7 +28,7 @@ func TestTemplateExecution(t *testing.T) {
 		},
 		{
 			name:         "Number Claim",
-			templateText: "{{.Claims.age}}",
+			templateText: "[[.Claims.age]]",
 			data: map[string]interface{}{
 				"Claims": map[string]interface{}{
 					"age": 30,
@@ -39,7 +39,7 @@ func TestTemplateExecution(t *testing.T) {
 		},
 		{
 			name:         "Boolean Claim",
-			templateText: "{{.Claims.admin}}",
+			templateText: "[[.Claims.admin]]",
 			data: map[string]interface{}{
 				"Claims": map[string]interface{}{
 					"admin": true,
@@ -50,7 +50,7 @@ func TestTemplateExecution(t *testing.T) {
 		},
 		{
 			name:         "Array Claim",
-			templateText: "{{index .Claims.roles 0}}",
+			templateText: "[[index .Claims.roles 0]]",
 			data: map[string]interface{}{
 				"Claims": map[string]interface{}{
 					"roles": []string{"admin", "user"},
@@ -61,7 +61,7 @@ func TestTemplateExecution(t *testing.T) {
 		},
 		{
 			name:         "Nested Object Claim",
-			templateText: "{{.Claims.user.name}}",
+			templateText: "[[.Claims.user.name]]",
 			data: map[string]interface{}{
 				"Claims": map[string]interface{}{
 					"user": map[string]interface{}{
@@ -74,7 +74,7 @@ func TestTemplateExecution(t *testing.T) {
 		},
 		{
 			name:         "Access Token",
-			templateText: "Bearer {{.AccessToken}}",
+			templateText: "Bearer [[.AccessToken]]",
 			data: map[string]interface{}{
 				"AccessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.Et9HFtf9R3GEMA0IICOfFMVXY7kkTX1wr4qCyhIf58U",
 			},
@@ -83,7 +83,7 @@ func TestTemplateExecution(t *testing.T) {
 		},
 		{
 			name:         "ID Token",
-			templateText: "{{.IdToken}}",
+			templateText: "[[.IdToken]]",
 			data: map[string]interface{}{
 				"IdToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.Et9HFtf9R3GEMA0IICOfFMVXY7kkTX1wr4qCyhIf58U",
 			},
@@ -92,7 +92,7 @@ func TestTemplateExecution(t *testing.T) {
 		},
 		{
 			name:         "Refresh Token",
-			templateText: "{{.RefreshToken}}",
+			templateText: "[[.RefreshToken]]",
 			data: map[string]interface{}{
 				"RefreshToken": "refresh-token-value",
 			},
@@ -101,7 +101,7 @@ func TestTemplateExecution(t *testing.T) {
 		},
 		{
 			name:         "Conditional Template",
-			templateText: "{{if .Claims.admin}}Admin User{{else}}Regular User{{end}}",
+			templateText: "[[if .Claims.admin]]Admin User[[else]]Regular User[[end]]",
 			data: map[string]interface{}{
 				"Claims": map[string]interface{}{
 					"admin": true,
@@ -112,7 +112,7 @@ func TestTemplateExecution(t *testing.T) {
 		},
 		{
 			name:         "Multiple Claims",
-			templateText: "{{.Claims.firstName}} {{.Claims.lastName}} <{{.Claims.email}}>",
+			templateText: "[[.Claims.firstName]] [[.Claims.lastName]] <[[.Claims.email]]>",
 			data: map[string]interface{}{
 				"Claims": map[string]interface{}{
 					"firstName": "John",
@@ -125,7 +125,7 @@ func TestTemplateExecution(t *testing.T) {
 		},
 		{
 			name:         "Missing Claim",
-			templateText: "{{.Claims.missing}}",
+			templateText: "[[.Claims.missing]]",
 			data: map[string]interface{}{
 				"Claims": map[string]interface{}{},
 			},
@@ -134,7 +134,7 @@ func TestTemplateExecution(t *testing.T) {
 		},
 		{
 			name:         "Invalid Template Syntax",
-			templateText: "{{.Claims.email",
+			templateText: "[[.Claims.email",
 			data: map[string]interface{}{
 				"Claims": map[string]interface{}{
 					"email": "user@example.com",
@@ -193,7 +193,7 @@ func TestTemplateExecutionContext(t *testing.T) {
 	}{
 		{
 			name:         "Access and ID token distinction",
-			templateText: "Access: {{.AccessToken}} ID: {{.IdToken}}",
+			templateText: "Access: [[.AccessToken]] ID: [[.IdToken]]",
 			data: templateData{
 				AccessToken: "access-token-value",
 				IdToken:     "id-token-value", // Now these should be distinct values
@@ -203,7 +203,7 @@ func TestTemplateExecutionContext(t *testing.T) {
 		},
 		{
 			name:         "Combining tokens and claims",
-			templateText: "User: {{.Claims.sub}} Token: {{.AccessToken}}",
+			templateText: "User: [[.Claims.sub]] Token: [[.AccessToken]]",
 			data: templateData{
 				AccessToken: "access-token",
 				IdToken:     "access-token",

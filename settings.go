@@ -12,13 +12,13 @@ import (
 
 // TemplatedHeader represents a custom HTTP header with a templated value.
 // The value can contain template expressions that will be evaluated for each
-// authenticated request, such as {{.claims.email}} or {{.accessToken}}.
+// authenticated request, such as [[.Claims.email]] or [[.AccessToken]].
 type TemplatedHeader struct {
 	// Name is the HTTP header name to set (e.g., "X-Forwarded-Email")
 	Name string `json:"name"`
 
 	// Value is the template string for the header value
-	// Example: "{{.claims.email}}", "Bearer {{.accessToken}}"
+	// Example: "[[.Claims.email]]", "Bearer [[.AccessToken]]"
 	Value string `json:"value"`
 }
 
@@ -107,15 +107,25 @@ type Config struct {
 	RefreshGracePeriodSeconds int `json:"refreshGracePeriodSeconds"`
 	// Headers defines custom HTTP headers to set with templated values (optional)
 	// Values can reference tokens and claims using Go templates with the following variables:
-	// - {{.AccessToken}} - The access token (ID token)
-	// - {{.IdToken}} - Same as AccessToken (for consistency)
-	// - {{.RefreshToken}} - The refresh token
-	// - {{.Claims.email}} - Access token claims (use proper case for claim names)
+	// - [[.AccessToken]] - The access token (ID token)
+	// - [[.IdToken]] - Same as AccessToken (for consistency)
+	// - [[.RefreshToken]] - The refresh token
+	// - [[.Claims.email]] - Access token claims (use proper case for claim names)
 	// Examples:
 	//
-	//	[{Name: "X-Forwarded-Email", Value: "{{.Claims.email}}"}]
-	//	[{Name: "Authorization", Value: "Bearer {{.AccessToken}}"}]
+	//	[{Name: "X-Forwarded-Email", Value: "[[.Claims.email]]"}]
+	//	[{Name: "Authorization", Value: "Bearer [[.AccessToken]]"}]
 	Headers []TemplatedHeader `json:"headers"`
+
+	// MetaHeaderName specifies the name for the metadata header (optional)
+	// If set, the plugin will create a JSON object from MetaClaims
+	// Example: "X-User-Meta"
+	MetaHeaderName string `json:"metaHeaderName"`
+
+	// MetaClaims lists claim keys to include in the metadata JSON (optional)
+	// Only used if MetaHeaderName is set
+	// Example: ["department", "team", "custom_field"]
+	MetaClaims []string `json:"metaClaims"`
 }
 
 const (
